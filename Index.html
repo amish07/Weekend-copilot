@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekend Copilot - Your AI Weekend Bestie 🤖</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+            border-left: 1px solid #333;
+            border-right: 1px solid #333;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 50%, #45b7d1 100%);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #ffffff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .avatar.ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .avatar.user {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.ai .message-content {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 1px solid #333;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 1px solid #333;
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+            max-width: 70%;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .input-container {
+            padding: 20px;
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            background: #2d2d2d;
+            border-radius: 25px;
+            padding: 10px 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .message-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            resize: none;
+            max-height: 120px;
+            min-height: 24px;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+
+        .message-input:focus {
+            outline: none;
+        }
+
+        .message-input::placeholder {
+            color: #888;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .quick-action {
+            background: linear-gradient(135deg, #333 0%, #2a2a2a 100%);
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .quick-action:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .itinerary-card {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
+            border: 1px solid #404040;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .itinerary-day {
+            margin-bottom: 25px;
+        }
+
+        .day-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .activity-item {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            background: rgba(102, 126, 234, 0.15);
+            transform: translateX(5px);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .activity-time {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .activity-cost {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .activity-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .activity-location {
+            color: #4ecdc4;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .activity-description {
+            color: #ccc;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .activity-booking {
+            display: inline-block;
+            background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+            color: white;
+            padding: 6px 14px;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .activity-booking:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 205, 196, 0.4);
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+
+        .welcome-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 10px 0;
+            border-left: 4px solid #ff1744;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border: none;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .activity-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>Weekend Copilot 🤖✨</h1>
+                <p>Your AI bestie for epic weekend vibes</p>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message">
+                <h3>Hey there! 👋</h3>
+                <p>I'm your weekend planning bestie! Tell me where you're at and what kind of vibe you're going for, and I'll hook you up with the perfect weekend plan! 🔥</p>
+                
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="sendQuickMessage('Plan a romantic weekend in Mumbai')">💕 Romantic Mumbai</button>
+                    <button class="quick-action" onclick="sendQuickMessage('Fun activities with friends in Bangalore')">👯‍♀️ Friends Bangalore</button>
+                    <button class="quick-action" onclick="sendQuickMessage('Family weekend in Delhi under 5000 budget')">👨‍👩‍👧‍👦 Family Delhi</button>
+                    <button class="quick-action" onclick="sendQuickMessage('Solo adventure in Goa')">🧘‍♀️ Solo Goa</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Type your weekend dreams here... ✨"
+                    rows="1"
+                ></textarea>
+                <button id="sendBtn" class="send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const SERPER_API_KEY = '54634942c72d802e36dafe499200fcfe97e04d05';
+        const OPENROUTER_API_KEY = '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';
+        
+        const SERPER_URL = 'https://google.serper.dev/search';
+        const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+        // DOM Elements
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Chat state
+        let conversationHistory = [];
+        let isProcessing = false;
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Send message on Enter (but not Shift+Enter)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        function sendQuickMessage(message) {
+            messageInput.value = message;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isProcessing) return;
+
+            isProcessing = true;
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            // Add user message to chat
+            addMessage('user', message);
+            
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Process the message and get response
+                const response = await processUserMessage(message);
+                
+                // Hide typing indicator
+                hideTypingIndicator();
+                
+                // Add AI response to chat
+                addMessage('ai', response);
+                
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('ai', "Oops! Something went wrong 😅 Let me try that again. Can you rephrase your request?");
+                console.error('Error processing message:', error);
+            } finally {
+                isProcessing = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        function addMessage(type, content, isItinerary = false) {
+            // Remove welcome message if it exists
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage && type === 'user') {
+                welcomeMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${type}`;
+            avatar.textContent = type === 'ai' ? '🤖' : '😎';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            if (isItinerary && type === 'ai') {
+                messageContent.innerHTML = content;
+            } else {
+                messageContent.textContent = content;
+            }
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai';
+            typingDiv.id = 'typing-indicator';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar ai';
+            avatar.textContent = '🤖';
+            
+            const typingContent = document.createElement('div');
+            typingContent.className = 'typing-indicator';
+            typingContent.style.display = 'block';
+            typingContent.innerHTML = `
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(typingContent);
+            
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function processUserMessage(message) {
+            // First, let the AI understand what the user wants
+            const analysisResponse = await analyzeUserRequest(message);
+            
+            // Extract location and preferences from the analysis
+            const { location, preferences, theme, budget } = parseAnalysisResponse(analysisResponse);
+            
+            if (!location) {
+                return "Hey! I'd love to help plan your weekend, but I need to know which city you're thinking about! 🏙️ Drop me a location and your vibe!";
+            }
+            
+            // Search for relevant information
+            const searchResults = await performSearches(location, preferences, theme);
+            
+            // Generate personalized itinerary
+            const itinerary = await generatePersonalizedItinerary(searchResults, { location, preferences, theme, budget }, message);
+            
+            return itinerary;
+        }
+
+        async function analyzeUserRequest(message) {
+            const analysisPrompt = `Analyze this user message and extract weekend planning information:
+"${message}"
+
+Extract:
+- Location (city in India)
+- Preferences (restaurants, activities, trips, nightlife, shopping, etc.)
+- Theme/vibe (romantic, friends, family, solo, party, chill, adventure, etc.)  
+- Budget (if mentioned, otherwise assume mid-range)
+
+Respond in JSON format:
+{
+    "location": "city name or null",
+    "preferences": ["list of interests"],
+    "theme": "main vibe/theme",
+    "budget": "budget range or 'mid-range'"
+}`;
+
+            try {
+                const response = await fetch(OPENROUTER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'openai/gpt-oss-20b:free',
+                        messages: [
+                            { role: 'system', content: 'You are an expert at analyzing user requests for weekend planning. Always respond with valid JSON.' },
+                            { role: 'user', content: analysisPrompt }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 500
+                    })
+                });
+
+                const data = await response.json();
+                return data.choices[0].message.content;
+            } catch (error) {
+                console.error('Analysis error:', error);
+                return '{"location": null, "preferences": [], "theme": "general", "budget": "mid-range"}';
+            }
+        }
+
+        function parseAnalysisResponse(response) {
+            try {
+                const jsonMatch = response.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    return {
+                        location: parsed.location,
+                        preferences: parsed.preferences || [],
+                        theme: parsed.theme || 'general',
+                        budget: parsed.budget || 'mid-range'
+                    };
+                }
+            } catch (error) {
+                console.error('Parsing error:', error);
+            }
+            
+            return {
+                location: null,
+                preferences: [],
+                theme: 'general',
+                budget: 'mid-range'
+            };
+        }
+
+        async function performSearches(location, preferences, theme) {
+            const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+            const searches = [];
+            
+            // Generate search queries based on preferences
+            if (preferences.includes('restaurants') || preferences.length === 0) {
+                searches.push(`best ${theme} restaurants ${location} ${currentMonth}`);
+            }
+            if (preferences.includes('activities') || preferences.length === 0) {
+                searches.push(`fun weekend activities ${location} ${currentMonth}`);
+            }
+            if (preferences.includes('trips')) {
+                searches.push(`weekend trips near ${location} ${currentMonth}`);
+            }
+            if (preferences.includes('nightlife')) {
+                searches.push(`best nightlife bars clubs ${location} ${currentMonth}`);
+            }
+            
+            // Always include a general search
+            searches.push(`weekend things to do ${location} ${currentMonth}`);
+            
+            const results = {};
+            for (let i = 0; i < Math.min(searches.length, 3); i++) {
+                try {
+                    const searchResult = await searchWithSerper(searches[i]);
+                    results[`search_${i}`] = searchResult;
+                    
+                    // Delay between searches
+                    if (i < searches.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                    }
+                } catch (error) {
+                    console.error(`Search ${i} error:`, error);
+                }
+            }
+            
+            return results;
+        }
+
+        async function searchWithSerper(query) {
+            const response = await fetch(SERPER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': SERPER_API_KEY
+                },
+                body: JSON.stringify({ q: query, num: 5 })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Serper API error: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+
+        async function generatePersonalizedItinerary(searchResults, userPrefs, originalMessage) {
+            const genZPrompt = `You're Weekend Copilot, the coolest AI bestie for weekend planning! 🤖✨
+
+User said: "${originalMessage}"
+Location: ${userPrefs.location}
+Vibe: ${userPrefs.theme}
+Interests: ${userPrefs.preferences.join(', ') || 'general fun'}
+Budget: ${userPrefs.budget}
+
+Search results: ${JSON.stringify(searchResults)}
+
+Create a fire weekend itinerary that's:
+- Totally Gen Z vibes (use emojis, modern slang, but keep it helpful)
+- Saturday & Sunday plans
+- Real places from search results when possible
+- Budget-friendly options
+- Perfect for their vibe
+
+Format as HTML for a chatbot response with:
+1. A friendly intro message
+2. Itinerary cards with day/time/activity/location/cost
+3. Personal recommendations and why each spot slaps
+4. End with asking if they want adjustments
+
+Make it conversational, not robotic! Use emojis and make it feel like you're texting your bestie! 🔥`;
+
+            try {
+                const response = await fetch(OPENROUTER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'openai/gpt-oss-20b:free',
+                        messages: [
+                            { 
+                                role: 'system', 
+                                content: 'You are Weekend Copilot, a Gen Z AI assistant who creates amazing weekend plans. Be conversational, use emojis, and format responses in HTML for chat display.' 
+                            },
+                            { role: 'user', content: genZPrompt }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 2000
+                    })
+                });
+
+                const data = await response.json();
+                let response_text = data.choices[0].message.content;
+                
+                // If the response looks like it might contain HTML, return it as HTML
+                if (response_text.includes('<') && response_text.includes('>')) {
+                    const messageContent = document.createElement('div');
+                    messageContent.innerHTML = response_text;
+                    addMessage('ai', '', true);
+                    const lastMessage = chatContainer.lastElementChild.querySelector('.message-content');
+                    lastMessage.innerHTML = response_text;
+                    return;
+                } else {
+                    // Return as regular text if no HTML formatting
+                    return response_text;
+                }
+                
+            } catch (error) {
+                console.error('Itinerary generation error:', error);
+                return createFallbackResponse(userPrefs);
+            }
+        }
+
+        function createFallbackResponse(userPrefs) {
+            return `Yo! I'm totally vibing with your ${userPrefs.theme} weekend idea in ${userPrefs.location}! 🔥 
+
+Here's what I'm thinking for your epic weekend:
+
+**Saturday Vibes:**
+🌅 Morning: Hit up a local cafe for that perfect breakfast aesthetic
+🎯 Afternoon: Explore the coolest spots in ${userPrefs.location}
+🌆 Evening: Find the perfect dinner spot for your ${userPrefs.theme} vibe
+
+**Sunday Energy:**
+☀️ Morning: Chill brunch vibes
+🎪 Afternoon: Some fun activities that match your energy
+🌃 Evening: Wind down with something memorable
+
+I ran into some tech issues getting the exact spots, but drop me some more specific vibes and I'll hook you up with the perfect recommendations! What kind of food you feeling? Any specific activities that get you hyped? 💯`;
+        }
+
+        // Initialize chat
+        messageInput.focus();
+    </script>
+</body>
+</html>
